@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "tensorflow/core/common_runtime/direct_session.h"
 
+#include <iostream>
 #include <atomic>
 #include <string>
 #include <vector>
@@ -334,6 +335,8 @@ Status DirectSession::Run(const RunOptions& run_options,
         (build_cost_model > 0) ? &cost_model_manager_ : nullptr);
     run_state.collector = args.stats_collector;
   }
+
+  std::cout << "StepStats: DirectExecution Run ERIC *******" << std::endl;
 
   // TODO(pbar) CostModel still gets very confused when presented
   // with trace data from the GPUTracer. This will need fixing if the

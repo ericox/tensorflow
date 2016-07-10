@@ -12,6 +12,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
+#include <iostream>
 #include "tensorflow/core/common_runtime/step_stats_collector.h"
 
 #include "tensorflow/core/framework/step_stats.pb.h"
@@ -47,6 +48,7 @@ void StepStatsCollector::UpdateCostModelNode(const NodeExecStats* nt,
 
 void StepStatsCollector::Save(const string& device, NodeExecStats* nt) {
   VLOG(1) << "Save dev " << device << " nt " << nt;
+  std::cout << "Save dev " << device << " nt " << nt;
   {
     mutex_lock l(mu_);
     if (!step_stats_) {
