@@ -309,6 +309,8 @@ class GrpcWorkerService : public AsyncServiceInterface {
     }
     StepStatsCollector* collector = nullptr;
     // TODO(mrry): Collect results from a profiler if available.
+    // TODO(ericox): check RunGraphRequest if ExecutorOpts.record_timeline is set.
+    // if so, create a StepStatsCollector
     CancellationManager* cm = new CancellationManager;
     call->SetCancelCallback([this, cm, step_id]() {
       cm->StartCancel();
