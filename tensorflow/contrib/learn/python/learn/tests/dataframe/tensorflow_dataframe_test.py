@@ -1,4 +1,5 @@
-# Copyright 2016 Google Inc. All Rights Reserved.
+# pylint: disable=g-bad-file-header
+# Copyright 2016 The TensorFlow Authors. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+
 """Tests for learn.dataframe.tensorflow_dataframe."""
 
 from __future__ import absolute_import
@@ -19,6 +21,7 @@ from __future__ import division
 from __future__ import print_function
 
 import csv
+import math
 import tempfile
 
 import numpy as np
@@ -60,13 +63,14 @@ def _assert_df_equals_dict(expected_df, actual_dict):
 def _make_test_csv():
   f = tempfile.NamedTemporaryFile(delete=False, mode="w")
   w = csv.writer(f)
-  w.writerow(["int", "float", "bool"])
+  w.writerow(["int", "float", "bool", "string"])
   for _ in range(100):
     intvalue = np.random.randint(-10, 10)
     floatvalue = np.random.rand()
     boolvalue = int(np.random.rand() > 0.3)
+    stringvalue = "S: %.4f" % np.random.rand()
 
-    row = [intvalue, floatvalue, boolvalue]
+    row = [intvalue, floatvalue, boolvalue, stringvalue]
     w.writerow(row)
   f.close()
   return f.name
@@ -75,14 +79,16 @@ def _make_test_csv():
 def _make_test_csv_sparse():
   f = tempfile.NamedTemporaryFile(delete=False, mode="w")
   w = csv.writer(f)
-  w.writerow(["int", "float", "bool"])
+  w.writerow(["int", "float", "bool", "string"])
   for _ in range(100):
     # leave columns empty; these will be read as default value (e.g. 0 or NaN)
     intvalue = np.random.randint(-10, 10) if np.random.rand() > 0.5 else ""
     floatvalue = np.random.rand() if np.random.rand() > 0.5 else ""
     boolvalue = int(np.random.rand() > 0.3) if np.random.rand() > 0.5 else ""
+    stringvalue = (("S: %.4f" % np.random.rand())
+                   if np.random.rand() > 0.5 else "")
 
-    row = [intvalue, floatvalue, boolvalue]
+    row = [intvalue, floatvalue, boolvalue, stringvalue]
     w.writerow(row)
   f.close()
   return f.name
@@ -121,7 +127,6 @@ class TensorFlowDataFrameTestCase(tf.test.TestCase):
     """Test construction from Pandas DataFrame."""
     if not HAS_PANDAS:
       return
-
     pandas_df = pd.DataFrame({"sparrow": range(10), "ostrich": 1})
     tensorflow_df = df.TensorFlowDataFrame.from_pandas(pandas_df,
                                                        batch_size=10,
@@ -174,13 +179,12 @@ class TensorFlowDataFrameTestCase(tf.test.TestCase):
   def testFromCSV(self):
     if not HAS_PANDAS:
       return
-
     num_batches = 100
     batch_size = 8
     enqueue_size = 7
 
     data_path = _make_test_csv()
-    default_values = [0, 0.0, 0]
+    default_values = [0, 0.0, 0, ""]
 
     pandas_df = pd.read_csv(data_path)
     tensorflow_df = df.TensorFlowDataFrame.from_csv(
@@ -200,7 +204,7 @@ class TensorFlowDataFrameTestCase(tf.test.TestCase):
     expected_num_batches = (num_epochs * 100) // batch_size
 
     data_path = _make_test_csv()
-    default_values = [0, 0.0, 0]
+    default_values = [0, 0.0, 0, ""]
 
     tensorflow_df = df.TensorFlowDataFrame.from_csv(
         [data_path],
@@ -212,6 +216,8 @@ class TensorFlowDataFrameTestCase(tf.test.TestCase):
     self.assertEqual(expected_num_batches, actual_num_batches)
 
   def testFromCSVWithFeatureSpec(self):
+    if not HAS_PANDAS:
+      return
     num_batches = 100
     batch_size = 8
 
@@ -219,10 +225,17 @@ class TensorFlowDataFrameTestCase(tf.test.TestCase):
     feature_spec = {
         "int": tf.FixedLenFeature(None, dtypes.int16, np.nan),
         "float": tf.VarLenFeature(dtypes.float16),
-        "bool": tf.VarLenFeature(dtypes.bool)
+        "bool": tf.VarLenFeature(dtypes.bool),
+        "string": tf.FixedLenFeature(None, dtypes.string, "")
     }
 
-    pandas_df = pd.read_csv(data_path)
+    pandas_df = pd.read_csv(data_path, dtype={"string": object})
+    # Pandas insanely uses NaN for empty cells in a string column.
+    # And, we can't use Pandas replace() to fix them because nan != nan
+    s = pandas_df["string"]
+    for i in range(0, len(s)):
+      if isinstance(s[i], float) and math.isnan(s[i]):
+        s[i] = ""
     tensorflow_df = df.TensorFlowDataFrame.from_csv_with_feature_spec(
         [data_path],
         batch_size=batch_size,
