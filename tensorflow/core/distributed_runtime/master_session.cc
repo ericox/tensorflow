@@ -526,9 +526,10 @@ Status MasterSession::ReffedClientGraph::RunPartitions(
   const int num = partitions_.size();
   RunManyGraphs calls(num);
   ExecutorOpts exec_opts;
-  VLOG(0) << req.options().DebugString();
+  VLOG(0) << "ReqOptions: " << req.options().DebugString();
   const bool do_trace = (req.options().trace_level() > RunOptions::NO_TRACE);
   if (do_trace) {
+    VLOG(0) << "do_trace Settting Exec_opts" << req.options().DebugString();
     exec_opts.set_record_timeline(true);
     pss->step_stats.resize(num);
   }
