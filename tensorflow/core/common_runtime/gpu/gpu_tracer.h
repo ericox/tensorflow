@@ -36,8 +36,9 @@ class StepStatsCollector;
 //   tracer->Stop();
 //
 //   StepStats stats;
+//   string device_prefix = "";
 //   StepStatsCollector collector(&stats);
-//   tracer->Collect(&collector);
+//   tracer->Collect(&collector, device_prefix);
 // }
 //
 // Notes:
@@ -65,7 +66,7 @@ class GPUTracer {
   // Collect trace results.  Results are added to the specified
   // StepStatsCollector.  Does not clear any existing stats.
   // It is an error to call 'Collect' while a trace is running.
-  virtual Status Collect(StepStatsCollector* collector) = 0;
+  virtual Status Collect(StepStatsCollector* collector, string device_prefix) = 0;
 };
 
 // Creates a platform-specific GPUTracer.

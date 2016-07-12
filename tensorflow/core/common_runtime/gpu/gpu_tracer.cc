@@ -288,7 +288,7 @@ class GPUTracerImpl : public GPUTracer,
   // GPUTracer interface:
   Status Start() override;
   Status Stop() override;
-  Status Collect(StepStatsCollector *collector) override;
+  Status Collect(StepStatsCollector *collector, string device_prefix) override;
 
   // port::Tracing::Engine interface:
   bool IsEnabled() const override {
@@ -546,14 +546,14 @@ void GPUTracerImpl::ActivityCallback(const CUpti_Activity &record) {
   }
 }
 
-Status GPUTracerImpl::Collect(StepStatsCollector *collector) {
+Status GPUTracerImpl::Collect(StepStatsCollector *collector, string device_prefix) {
   mutex_lock l(mu_);
   if (enabled_) {
     return errors::FailedPrecondition("GPUTracer is still enabled.");
   }
 
   // TODO(pbar) Handle device IDs and prefix properly.
-  const string prefix = "";
+  const string prefix = device_prefix;
   const int id = 0;
   const string stream_device = strings::StrCat(prefix, "/gpu:", id, "/stream:");
   const string memcpy_device = strings::StrCat(prefix, "/gpu:", id, "/memcpy");

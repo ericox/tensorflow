@@ -357,8 +357,9 @@ class GrpcWorkerService : public AsyncServiceInterface {
             }
           }
           if (tracer) {
+            VLOG(0) << "Collecting GPUTracer with worker device prefix: " << env->worker_name;
             tracer->Stop();
-            tracer->Collect(collector);
+            tracer->Collect(collector, env->worker_name);
           }
           delete collector;
           delete out;

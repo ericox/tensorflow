@@ -118,7 +118,8 @@ TEST_F(GPUTracerTest, CollectBeforeStart) {
   if (!tracer) return;
   StepStats stats;
   StepStatsCollector collector(&stats);
-  TF_EXPECT_OK(tracer->Collect(&collector));
+  string prefix = "";
+  TF_EXPECT_OK(tracer->Collect(&collector, prefix));
   EXPECT_EQ(stats.dev_stats_size(), 0);
 }
 
@@ -129,7 +130,8 @@ TEST_F(GPUTracerTest, CollectBeforeStop) {
   TF_EXPECT_OK(tracer->Start());
   StepStats stats;
   StepStatsCollector collector(&stats);
-  Status status = tracer->Collect(&collector);
+  string prefix = "";
+  Status status = tracer->Collect(&collector, prefix);
   ExpectFailure(status, tensorflow::error::FAILED_PRECONDITION);
   TF_EXPECT_OK(tracer->Stop());
 }
@@ -201,7 +203,8 @@ TEST_F(GPUTracerTest, TraceToStepStatsCollector) {
   TF_ASSERT_OK(tracer->Stop());
   StepStats stats;
   StepStatsCollector collector(&stats);
-  TF_ASSERT_OK(tracer->Collect(&collector));
+  string prefix = "";
+  TF_ASSERT_OK(tracer->Collect(&collector, prefix));
   // Depending on whether this runs on CPU or GPU, we will have a
   // different number of devices.
   EXPECT_GE(stats.dev_stats_size(), 1);

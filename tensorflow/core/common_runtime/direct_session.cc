@@ -356,7 +356,7 @@ Status DirectSession::Run(const RunOptions& run_options,
 
   if (tracer) {
     tracer->Stop();
-    tracer->Collect(args.stats_collector);
+    tracer->Collect(args.stats_collector, "");
   }
 
   {
